@@ -24,6 +24,8 @@ type IdNameObject = { id: string, name: string }
 @metadata({
   networkId: 'Resource ID of the FinOps hub isolated virtual network, if private network routing is enabled.'
   networkName: 'Name of the FinOps hub isolated virtual network, if private network routing is enabled.'
+  ownsNetwork: 'Indicates whether the FinOps toolkit creates and manages the virtual network and subnets.'
+  ownsDnsZones: 'Indicates whether the FinOps toolkit creates and manages private DNS zones and virtual network links.'
   scriptStorage: 'Name of the storage account used for deployment scripts.'
   dnsZones: {
     blob: 'Resource ID and name for the blob storage DNS zone.'
@@ -31,6 +33,7 @@ type IdNameObject = { id: string, name: string }
     file: 'Resource ID and name for the file storage DNS zone.'
     queue: 'Resource ID and name for the queue storage DNS zone.'
     table: 'Resource ID and name for the table storage DNS zone.'
+    dataExplorer: 'Resource ID and name for the Data Explorer DNS zone.'
   }
   subnets: {
     dataExplorer: 'Resource ID of the subnet for the Data Explorer instance.'
@@ -43,6 +46,8 @@ type IdNameObject = { id: string, name: string }
 type HubRoutingProperties = {
   networkId: string
   networkName: string
+  ownsNetwork: bool
+  ownsDnsZones: bool
   scriptStorage: string
   dnsZones: {
     blob: IdNameObject
@@ -50,6 +55,7 @@ type HubRoutingProperties = {
     file: IdNameObject
     queue: IdNameObject
     table: IdNameObject
+    dataExplorer: IdNameObject
   }
   subnets: {
     dataExplorer: string
@@ -176,8 +182,22 @@ func idName(name string, resourceType string) IdNameObject => {
   name: name
 }
 
+func idNameFromId(id string) IdNameObject => {
+  id: id
+  name: last(array(split(id, '/')))
+}
+
 // cSpell:ignore privatelink
 func dnsZoneIdName(type string) IdNameObject => idName('privatelink.${type}.${environment().suffixes.storage}', 'Microsoft.Network/privateDnsZones')
+
+func dataExplorerDnsSuffix() string => ({
+  AzureCloud: 'kusto.windows.net'
+  AzureUSGovernment: 'kusto.usgovcloudapi.net'
+  AzureChinaCloud: 'kusto.windows.cn'
+}[?environment().name] ?? replace(environment().suffixes.storage, 'core', 'kusto'))
+
+// cSpell:ignore privatelink
+func dataExplorerDnsZoneIdName(location string) IdNameObject => idName(replace('privatelink.${location}.${dataExplorerDnsSuffix()}', '..', '.'), 'Microsoft.Network/privateDnsZones')
 
 //------------------------------------------------------------------------------
 // Hub config
@@ -197,6 +217,19 @@ func newHubInternal(
   enableInfrastructureEncryption bool,
   enablePublicAccess bool,
   enableNatGateway bool,
+  privateNetworkMode string,
+  existingVirtualNetworkId string,
+  existingPrivateEndpointSubnetId string,
+  existingScriptSubnetId string,
+  existingDataExplorerSubnetId string,
+  existingPrivateDnsZoneIds {
+    blob: string
+    dfs: string
+    file: string
+    queue: string
+    table: string
+    dataExplorer: string
+  },
   networkName string,
   networkAddressPrefix string,
   isTelemetryEnabled bool,
@@ -223,22 +256,25 @@ func newHubInternal(
     storageSku: storageSku
   }
   routing: {
-    networkId: enablePublicAccess ? '' : resourceId('Microsoft.Network/virtualNetworks', networkName)
-    networkName: enablePublicAccess ? '' : networkName
+    networkId: enablePublicAccess ? '' : (privateNetworkMode == 'customer' ? existingVirtualNetworkId : resourceId('Microsoft.Network/virtualNetworks', networkName))
+    networkName: enablePublicAccess ? '' : (privateNetworkMode == 'customer' ? last(array(split(existingVirtualNetworkId, '/'))) : networkName)
+    ownsNetwork: !enablePublicAccess && privateNetworkMode == 'managed'
+    ownsDnsZones: !enablePublicAccess && privateNetworkMode == 'managed'
     scriptStorage: enablePublicAccess ? '' : '${take(safeStorageName(name), 16 - length(suffix))}script${suffix}'
     dnsZones: {
-      blob:  enablePublicAccess ? { id:'', name:'' } : dnsZoneIdName('blob')
-      dfs:   enablePublicAccess ? { id:'', name:'' } : dnsZoneIdName('dfs')
-      file:  enablePublicAccess ? { id:'', name:'' } : dnsZoneIdName('file')
-      queue: enablePublicAccess ? { id:'', name:'' } : dnsZoneIdName('queue')
-      table: enablePublicAccess ? { id:'', name:'' } : dnsZoneIdName('table')
+      blob:         enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.blob) : dnsZoneIdName('blob'))
+      dfs:          enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.dfs) : dnsZoneIdName('dfs'))
+      file:         enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.file) : dnsZoneIdName('file'))
+      queue:        enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.queue) : dnsZoneIdName('queue'))
+      table:        enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.table) : dnsZoneIdName('table'))
+      dataExplorer: enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.dataExplorer) : dataExplorerDnsZoneIdName(location))
     }
     subnets: {
-      dataExplorer: enablePublicAccess ? '' : resourceId('Microsoft.Network/virtualNetworks/subnets', networkName, 'dataExplorer-subnet')!
-      dataFactory:  enablePublicAccess ? '' : resourceId('Microsoft.Network/virtualNetworks/subnets', networkName, 'private-endpoint-subnet')!
-      keyVault:     enablePublicAccess ? '' : resourceId('Microsoft.Network/virtualNetworks/subnets', networkName, 'private-endpoint-subnet')!
-      scripts:      enablePublicAccess ? '' : resourceId('Microsoft.Network/virtualNetworks/subnets', networkName, 'script-subnet')!
-      storage:      enablePublicAccess ? '' : resourceId('Microsoft.Network/virtualNetworks/subnets', networkName, 'private-endpoint-subnet')!
+      dataExplorer: enablePublicAccess ? '' : (privateNetworkMode == 'customer' ? existingDataExplorerSubnetId : resourceId('Microsoft.Network/virtualNetworks/subnets', networkName, 'dataExplorer-subnet')!)
+      dataFactory:  enablePublicAccess ? '' : (privateNetworkMode == 'customer' ? existingPrivateEndpointSubnetId : resourceId('Microsoft.Network/virtualNetworks/subnets', networkName, 'private-endpoint-subnet')!)
+      keyVault:     enablePublicAccess ? '' : (privateNetworkMode == 'customer' ? existingPrivateEndpointSubnetId : resourceId('Microsoft.Network/virtualNetworks/subnets', networkName, 'private-endpoint-subnet')!)
+      scripts:      enablePublicAccess ? '' : (privateNetworkMode == 'customer' ? existingScriptSubnetId : resourceId('Microsoft.Network/virtualNetworks/subnets', networkName, 'script-subnet')!)
+      storage:      enablePublicAccess ? '' : (privateNetworkMode == 'customer' ? existingPrivateEndpointSubnetId : resourceId('Microsoft.Network/virtualNetworks/subnets', networkName, 'private-endpoint-subnet')!)
     }
   }
   core: {
@@ -259,6 +295,19 @@ func newHub(
   enableInfrastructureEncryption bool,
   enablePublicAccess bool,
   enableNatGateway bool,
+  privateNetworkMode string,
+  existingVirtualNetworkId string,
+  existingPrivateEndpointSubnetId string,
+  existingScriptSubnetId string,
+  existingDataExplorerSubnetId string,
+  existingPrivateDnsZoneIds {
+    blob: string
+    dfs: string
+    file: string
+    queue: string
+    table: string
+    dataExplorer: string
+  },
   networkAddressPrefix string,
   isTelemetryEnabled bool,
 ) HubProperties => newHubInternal(
@@ -274,6 +323,12 @@ func newHub(
   enableInfrastructureEncryption,
   enablePublicAccess,
   enableNatGateway,
+  privateNetworkMode,
+  existingVirtualNetworkId,
+  existingPrivateEndpointSubnetId,
+  existingScriptSubnetId,
+  existingDataExplorerSubnetId,
+  existingPrivateDnsZoneIds,
   '${safeStorageName(name)}-vnet-${location}',    // networkName, cSpell:ignore vnet
   networkAddressPrefix,
   isTelemetryEnabled ?? true

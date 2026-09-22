@@ -141,6 +141,8 @@ var ftkReleaseUri = indexOf(finOpsToolkitVersion, '-dev') != -1
 
 var useFabric = !empty(fabricQueryUri)
 var useAzure = !useFabric && !empty(clusterName)
+var usePrivateRouting = app.hub.options.privateRouting
+var deployManagedDnsZones = usePrivateRouting && app.hub.routing.ownsDnsZones
 
 // cSpell:ignore ftkver, privatelink
 var dataExplorerDnsSuffixLookup = {
@@ -149,7 +151,6 @@ var dataExplorerDnsSuffixLookup = {
   AzureChinaCloud: 'kusto.windows.cn'
 }
 var dataExplorerDnsSuffix = dataExplorerDnsSuffixLookup[?environment().name] ?? replace(environment().suffixes.storage, 'core', 'kusto')
-var dataExplorerPrivateDnsZoneName = replace('privatelink.${app.hub.location}.${dataExplorerDnsSuffix}', '..', '.')
 
 // Actual = Minimum(ClusterMaximumConcurrentOperations, Number of nodes in cluster * Maximum(1, Core count per node * CoreUtilizationCoefficient))
 var ingestionCapacity = {
@@ -257,21 +258,21 @@ resource dataFactory 'Microsoft.DataFactory/factories@2018-06-01' existing = {
 }
 
 resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = {
-  name: 'privatelink.blob.${environment().suffixes.storage}'
+  name: app.hub.routing.dnsZones.blob.name
   dependsOn: [
     appRegistration
   ]
 }
 
 resource queuePrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = {
-  name: 'privatelink.queue.${environment().suffixes.storage}'
+  name: app.hub.routing.dnsZones.queue.name
   dependsOn: [
     appRegistration
   ]
 }
 
 resource tablePrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = {
-  name: 'privatelink.table.${environment().suffixes.storage}'
+  name: app.hub.routing.dnsZones.table.name
   dependsOn: [
     appRegistration
   ]
@@ -459,15 +460,19 @@ resource clusterStorageAccess 'Microsoft.Authorization/roleAssignments@2022-04-0
 }
 
 // DNS zone
-resource dataExplorerPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = if (useAzure && app.hub.options.privateRouting) {
-  name: dataExplorerPrivateDnsZoneName
+resource dataExplorerPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = if (useAzure && deployManagedDnsZones) {
+  name: app.hub.routing.dnsZones.dataExplorer.name
   location: 'global'
   tags: union(app.tags, app.hub.tagsByResource[?'Microsoft.Network/privateDnsZones'] ?? {})
   properties: {}
 }
 
+resource existingDataExplorerPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = if (useAzure && usePrivateRouting && !app.hub.routing.ownsDnsZones) {
+  name: app.hub.routing.dnsZones.dataExplorer.name
+}
+
 // Link DNS zone to VNet
-resource dataExplorerPrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = if (useAzure && app.hub.options.privateRouting) {
+resource dataExplorerPrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = if (useAzure && deployManagedDnsZones) {
   name: '${replace(dataExplorerPrivateDnsZone.name, '.', '-')}-link'
   location: 'global'
   parent: dataExplorerPrivateDnsZone
@@ -508,25 +513,25 @@ resource dataExplorerPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/pri
   properties: {
     privateDnsZoneConfigs: [
       {
-        name: 'privatelink-westus-kusto-net'
+        name: replace(usePrivateRouting && app.hub.routing.ownsDnsZones ? dataExplorerPrivateDnsZone.name : existingDataExplorerPrivateDnsZone.name, '.', '-')
         properties: {
-          privateDnsZoneId: dataExplorerPrivateDnsZone.id
+          privateDnsZoneId: deployManagedDnsZones ? dataExplorerPrivateDnsZone.id : existingDataExplorerPrivateDnsZone.id
         }
       }
       {
-        name: 'privatelink-blob-core-windows-net'
+        name: replace(blobPrivateDnsZone.name, '.', '-')
         properties: {
           privateDnsZoneId: blobPrivateDnsZone.id
         }
       }
       {
-        name: 'privatelink-table-core-windows-net'
+        name: replace(tablePrivateDnsZone.name, '.', '-')
         properties: {
           privateDnsZoneId: tablePrivateDnsZone.id
         }
       }
       {
-        name: 'privatelink-queue-core-windows-net'
+        name: replace(queuePrivateDnsZone.name, '.', '-')
         properties: {
           privateDnsZoneId: queuePrivateDnsZone.id
         }

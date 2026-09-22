@@ -165,6 +165,35 @@ param enableNatGateway bool = false
 @description('Optional. Address space for the workload. Minimum /26 subnet size is required for the workload. Default: "10.20.30.0/26".')
 param virtualNetworkAddressPrefix string = '10.20.30.0/26'
 
+@allowed([
+  'managed'
+  'customer'
+])
+@description('Optional. Private network ownership mode when private routing is enabled. "managed" (default) creates FinOps toolkit-managed virtual network and private DNS resources. "customer" uses existing customer-managed virtual network, subnets, and private DNS zones.')
+param privateNetworkMode string = 'managed'
+
+@description('Optional. Existing virtual network resource ID to use in customer private network mode.')
+param existingVirtualNetworkId string = ''
+
+@description('Optional. Existing subnet resource ID for Storage and Key Vault private endpoints in customer private network mode.')
+param existingPrivateEndpointSubnetId string = ''
+
+@description('Optional. Existing subnet resource ID for deployment scripts in customer private network mode.')
+param existingScriptSubnetId string = ''
+
+@description('Optional. Existing subnet resource ID for Azure Data Explorer private endpoints in customer private network mode.')
+param existingDataExplorerSubnetId string = ''
+
+@description('Optional. Existing private DNS zone resource IDs to use in customer private network mode.')
+param existingPrivateDnsZoneIds object = {
+  blob: ''
+  dfs: ''
+  file: ''
+  queue: ''
+  table: ''
+  dataExplorer: ''
+}
+
 
 //==============================================================================
 // Resources
@@ -200,6 +229,12 @@ module hub 'modules/hub.bicep' = {
     enablePublicAccess: enablePublicAccess
     enableNatGateway: enableNatGateway
     virtualNetworkAddressPrefix: virtualNetworkAddressPrefix
+    privateNetworkMode: privateNetworkMode
+    existingVirtualNetworkId: existingVirtualNetworkId
+    existingPrivateEndpointSubnetId: existingPrivateEndpointSubnetId
+    existingScriptSubnetId: existingScriptSubnetId
+    existingDataExplorerSubnetId: existingDataExplorerSubnetId
+    existingPrivateDnsZoneIds: existingPrivateDnsZoneIds
   }
 }
 

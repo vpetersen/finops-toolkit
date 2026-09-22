@@ -3,7 +3,7 @@ title: Configure private networking in FinOps hubs
 description: Learn about data access options with FinOps hubs and how to configure secure access to your data with private endpoints.
 author: flanakin
 ms.author: micflan
-ms.date: 08/23/2026
+ms.date: 09/22/2026
 ms.topic: how-to
 ms.service: finops
 ms.reviewer: micflan
@@ -40,7 +40,7 @@ Private routing uses service-specific network controls and private endpoints for
 - Data Explorer (if deployed) disables public network access and is accessible through a private IP address.
 - Key Vault (remote hubs only) is accessible through a private IP address. Its firewall denies access by default and allows trusted Azure services.
 - Azure Data Factory uses a managed integration runtime in a separate Data Factory managed virtual network for data-store traffic. The default Azure integration runtime runs Cost Management API activities.
-- The FinOps hub virtual network contains Toolkit-managed private endpoints and deployment and runtime subnets.
+- Private endpoint resources are deployed by the FinOps toolkit and can use either Toolkit-managed network and DNS resources or customer-managed virtual network and DNS resources.
 
 :::image type="content" source="./media/private-networking/finops-hubs-private-network.png" border="false" alt-text="Diagram of private routing through FinOps hub and Data Factory managed virtual networks to hub services." lightbox="./media/private-networking/finops-hubs-private-network.png" :::
 
@@ -50,9 +50,12 @@ Private routing separates data-plane traffic from trusted-service and management
 
 These paths don't provide general internet access to data. Role-based access control, service authentication, and default-deny firewall rules continue to protect access.
 
-The FinOps toolkit exclusively owns and manages the FinOps hub virtual network, its three subnets, private endpoints, private DNS, routing, and related resources. This network supports FinOps hub deployment and operation; it isn't a shared network for customer resources.
+Private routing supports two deployment modes:
 
-Don't add customer workloads, subnets, gateways, endpoints, DNS, route tables, or other configuration inside the Toolkit-managed virtual network. The Toolkit doesn't preserve customer additions during deployment or upgrade operations.
+- **Managed (default)**: The Toolkit creates and manages the FinOps hub virtual network, subnets, private DNS zones, DNS links, and private endpoints.
+- **Customer-managed**: The Toolkit creates private endpoints only, using customer-provided virtual network, subnet, and private DNS zone resource IDs. In this mode, the Toolkit doesn't create or manage private DNS zones or virtual network links.
+
+If you use managed mode, don't add customer workloads, subnets, gateways, endpoints, DNS, route tables, or other configuration inside the Toolkit-managed virtual network. The Toolkit doesn't preserve customer additions during deployment or upgrade operations.
 
 Private networking adds costs for networking resources, connectivity, and dedicated compute in Azure Data Factory. For a detailed estimate, see the Azure pricing calculator.
 
@@ -102,6 +105,18 @@ To enable private networking when deploying a new or updating an existing FinOps
 :::image type="content" source="./media/private-networking/finops-hubs-private-deployment.png" alt-text="Screenshot of secure private deployments." lightbox="./media/private-networking/finops-hubs-private-deployment.png" :::
 
 Before enabling private access, review the networking details on this page and coordinate with your network admins. Configure customer-managed private endpoints and DNS in your own network (preferred), or use the secondary peering option, before users and systems connect to the hub.
+
+### Customer-managed private network mode
+
+When you deploy with private routing and customer-managed networking, set `privateNetworkMode` to `customer` and provide:
+
+- `existingVirtualNetworkId`
+- `existingPrivateEndpointSubnetId`
+- `existingScriptSubnetId`
+- `existingDataExplorerSubnetId` (required when Azure Data Explorer is enabled)
+- `existingPrivateDnsZoneIds` for Storage (`blob`, `dfs`, `file`, `queue`, `table`) and Data Explorer (`dataExplorer`, required when Azure Data Explorer is enabled)
+
+In customer-managed mode, ensure your DNS design resolves both Storage and Azure Data Explorer private endpoint records from all required clients and runtimes. This includes linking private DNS zones to the target virtual network and configuring DNS forwarding or private resolver paths for connected networks as needed.
 
 <br>
 
