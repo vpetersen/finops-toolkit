@@ -265,7 +265,7 @@ func newHubInternal(
   }
   routing: {
     networkId: enablePublicAccess ? '' : (privateNetworkMode == 'customer' ? existingVirtualNetworkId : resourceId('Microsoft.Network/virtualNetworks', networkName))
-    networkName: enablePublicAccess ? '' : (privateNetworkMode == 'customer' ? last(array(split(existingVirtualNetworkId, '/'))) : networkName)
+    networkName: enablePublicAccess ? '' : (privateNetworkMode == 'customer' ? idNameFromId(existingVirtualNetworkId).name : networkName)
     ownsNetwork: !enablePublicAccess && privateNetworkMode == 'managed'
     ownsDnsZones: !enablePublicAccess && privateNetworkMode == 'managed'
     scriptStorage: enablePublicAccess ? '' : '${take(safeStorageName(name), 16 - length(suffix))}script${suffix}'
