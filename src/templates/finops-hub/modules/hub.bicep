@@ -218,7 +218,6 @@ param enableDefaultTelemetry bool = true
 
 var useFabric = !empty(fabricQueryUri)
 var useAzureDataExplorer = !useFabric && !empty(dataExplorerName)  // Prefer Fabric over Azure Data Explorer
-var useRemoteHub = !empty(remoteHubStorageKey)
 var isCustomerManagedPrivateNetwork = !enablePublicAccess && privateNetworkMode == 'customer'
 var validateCustomerVirtualNetwork = !isCustomerManagedPrivateNetwork || !empty(existingVirtualNetworkId) ? true : fail('Customer private network mode requires existingVirtualNetworkId.')
 var validateCustomerPrivateEndpointSubnet = !isCustomerManagedPrivateNetwork || !empty(existingPrivateEndpointSubnetId) ? true : fail('Customer private network mode requires existingPrivateEndpointSubnetId.')
@@ -230,7 +229,7 @@ var validateCustomerQueueDnsZone = !isCustomerManagedPrivateNetwork || !empty(ex
 var validateCustomerTableDnsZone = !isCustomerManagedPrivateNetwork || !empty(existingPrivateDnsZoneIds.table) ? true : fail('Customer private network mode requires existingPrivateDnsZoneIds.table.')
 var validateCustomerDataExplorerSubnet = !isCustomerManagedPrivateNetwork || !useAzureDataExplorer || !empty(existingDataExplorerSubnetId) ? true : fail('Customer private network mode with Azure Data Explorer requires existingDataExplorerSubnetId.')
 var validateCustomerDataExplorerDnsZone = !isCustomerManagedPrivateNetwork || !useAzureDataExplorer || !empty(existingPrivateDnsZoneIds.dataExplorer) ? true : fail('Customer private network mode with Azure Data Explorer requires existingPrivateDnsZoneIds.dataExplorer.')
-var validateCustomerKeyVaultDnsZone = !isCustomerManagedPrivateNetwork || !useRemoteHub || !empty(existingPrivateDnsZoneIds.keyVault) ? true : fail('Customer private network mode with remote hubs requires existingPrivateDnsZoneIds.keyVault.')
+var validateCustomerKeyVaultDnsZone = !isCustomerManagedPrivateNetwork || !empty(existingPrivateDnsZoneIds.keyVault) ? true : fail('Customer private network mode requires existingPrivateDnsZoneIds.keyVault.')
 var validateCustomerNetworkConfiguration = validateCustomerVirtualNetwork && validateCustomerPrivateEndpointSubnet && validateCustomerScriptSubnet && validateCustomerBlobDnsZone && validateCustomerDfsDnsZone && validateCustomerFileDnsZone && validateCustomerQueueDnsZone && validateCustomerTableDnsZone && validateCustomerDataExplorerSubnet && validateCustomerDataExplorerDnsZone && validateCustomerKeyVaultDnsZone
 
 // Hub details

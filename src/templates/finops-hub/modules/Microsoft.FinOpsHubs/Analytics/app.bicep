@@ -508,25 +508,25 @@ resource dataExplorerPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/pri
   properties: {
     privateDnsZoneConfigs: [
       {
-        name: replace(usePrivateRouting && app.hub.routing.ownsDnsZones ? dataExplorerPrivateDnsZone.name : existingDataExplorerPrivateDnsZone.name, '.', '-')
+      name: 'dataExplorerDnsZone'
         properties: {
           privateDnsZoneId: deployManagedDnsZones ? dataExplorerPrivateDnsZone.id : existingDataExplorerPrivateDnsZone.id
         }
       }
       {
-        name: replace(blobPrivateDnsZone.name, '.', '-')
+      name: 'blobDnsZone'
         properties: {
           privateDnsZoneId: blobPrivateDnsZone.id
         }
       }
       {
-        name: replace(tablePrivateDnsZone.name, '.', '-')
+      name: 'tableDnsZone'
         properties: {
           privateDnsZoneId: tablePrivateDnsZone.id
         }
       }
       {
-        name: replace(queuePrivateDnsZone.name, '.', '-')
+      name: 'queueDnsZone'
         properties: {
           privateDnsZoneId: queuePrivateDnsZone.id
         }

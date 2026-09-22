@@ -114,7 +114,7 @@ When you deploy with private routing and customer-managed networking, set `priva
 - `existingPrivateEndpointSubnetId`
 - `existingScriptSubnetId`
 - `existingDataExplorerSubnetId` (required when Azure Data Explorer is enabled)
-- `existingPrivateDnsZoneIds` for Storage (`blob`, `dfs`, `file`, `queue`, `table`), Key Vault (`keyVault`, required for remote hubs), and Data Explorer (`dataExplorer`, required when Azure Data Explorer is enabled)
+- `existingPrivateDnsZoneIds` for Storage (`blob`, `dfs`, `file`, `queue`, `table`), Key Vault (`keyVault`), and Data Explorer (`dataExplorer`, required when Azure Data Explorer is enabled)
 
 In customer-managed mode, ensure your DNS design resolves both Storage and Azure Data Explorer private endpoint records from all required clients and runtimes. This includes linking private DNS zones to the target virtual network and configuring DNS forwarding or private resolver paths for connected networks as needed.
 
