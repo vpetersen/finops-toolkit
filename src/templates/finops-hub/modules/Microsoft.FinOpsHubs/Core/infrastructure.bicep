@@ -324,7 +324,8 @@ resource filePrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = if 
 }
 
 resource existingFilePrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = if (useCustomerNetwork) {
-  name: string(hub.routing.dnsZones.file.name)
+  scope: resourceGroup(split(hub.routing.dnsZones.file.id, '/')[2], split(hub.routing.dnsZones.file.id, '/')[4])
+  name: last(array(split(hub.routing.dnsZones.file.id, '/')))
 }
 
 // Required for Azure Data Explorer

@@ -257,22 +257,25 @@ resource dataFactory 'Microsoft.DataFactory/factories@2018-06-01' existing = {
   ]
 }
 
-resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = {
-  name: app.hub.routing.dnsZones.blob.name
+resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = if (usePrivateRouting) {
+  scope: resourceGroup(split(app.hub.routing.dnsZones.blob.id, '/')[2], split(app.hub.routing.dnsZones.blob.id, '/')[4])
+  name: last(array(split(app.hub.routing.dnsZones.blob.id, '/')))
   dependsOn: [
     appRegistration
   ]
 }
 
-resource queuePrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = {
-  name: app.hub.routing.dnsZones.queue.name
+resource queuePrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = if (usePrivateRouting) {
+  scope: resourceGroup(split(app.hub.routing.dnsZones.queue.id, '/')[2], split(app.hub.routing.dnsZones.queue.id, '/')[4])
+  name: last(array(split(app.hub.routing.dnsZones.queue.id, '/')))
   dependsOn: [
     appRegistration
   ]
 }
 
-resource tablePrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = {
-  name: app.hub.routing.dnsZones.table.name
+resource tablePrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = if (usePrivateRouting) {
+  scope: resourceGroup(split(app.hub.routing.dnsZones.table.id, '/')[2], split(app.hub.routing.dnsZones.table.id, '/')[4])
+  name: last(array(split(app.hub.routing.dnsZones.table.id, '/')))
   dependsOn: [
     appRegistration
   ]
@@ -468,7 +471,8 @@ resource dataExplorerPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-0
 }
 
 resource existingDataExplorerPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = if (useAzure && usePrivateRouting && !app.hub.routing.ownsDnsZones) {
-  name: app.hub.routing.dnsZones.dataExplorer.name
+  scope: resourceGroup(split(app.hub.routing.dnsZones.dataExplorer.id, '/')[2], split(app.hub.routing.dnsZones.dataExplorer.id, '/')[4])
+  name: last(array(split(app.hub.routing.dnsZones.dataExplorer.id, '/')))
 }
 
 // Link DNS zone to VNet

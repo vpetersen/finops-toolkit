@@ -389,7 +389,8 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = if (use
 }
 
 resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = if (usesStorage && app.hub.options.privateRouting) {
-  name: app.hub.routing.dnsZones.blob.name
+  scope: resourceGroup(split(app.hub.routing.dnsZones.blob.id, '/')[2], split(app.hub.routing.dnsZones.blob.id, '/')[4])
+  name: last(array(split(app.hub.routing.dnsZones.blob.id, '/')))
 }
 
 resource blobEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = if (usesStorage && app.hub.options.privateRouting) {
@@ -428,7 +429,8 @@ resource blobEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = if (uses
 }
 
 resource dfsPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = if (usesStorage && app.hub.options.privateRouting) {
-  name: app.hub.routing.dnsZones.dfs.name
+  scope: resourceGroup(split(app.hub.routing.dnsZones.dfs.id, '/')[2], split(app.hub.routing.dnsZones.dfs.id, '/')[4])
+  name: last(array(split(app.hub.routing.dnsZones.dfs.id, '/')))
 }
 
 resource dfsEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = if (usesStorage && app.hub.options.privateRouting) {
@@ -517,7 +519,8 @@ resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' =
 }
 
 resource existingKeyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = if (usesKeyVault && app.hub.options.privateRouting && !app.hub.routing.ownsDnsZones) {
-  name: app.hub.routing.dnsZones.keyVault.name
+  scope: resourceGroup(split(app.hub.routing.dnsZones.keyVault.id, '/')[2], split(app.hub.routing.dnsZones.keyVault.id, '/')[4])
+  name: last(array(split(app.hub.routing.dnsZones.keyVault.id, '/')))
 }
 
 resource keyVaultEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = if (usesKeyVault && app.hub.options.privateRouting) {
