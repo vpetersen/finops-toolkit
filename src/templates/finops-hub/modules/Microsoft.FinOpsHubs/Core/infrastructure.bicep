@@ -20,7 +20,6 @@ var nsgName = '${hub.routing.networkName}-nsg'
 var natGatewayName = '${hub.routing.networkName}-natgw'
 var natGatewayPipName = '${hub.routing.networkName}-natgw-pip'
 var deployManagedNetwork = hub.options.privateRouting && hub.routing.ownsNetwork
-var useCustomerNetwork = hub.options.privateRouting && !hub.routing.ownsNetwork
 var deployManagedDnsZones = hub.options.privateRouting && hub.routing.ownsDnsZones
 var useCustomerDnsZones = hub.options.privateRouting && !hub.routing.ownsDnsZones
 
@@ -208,11 +207,6 @@ resource vNet 'Microsoft.Network/virtualNetworks@2023-11-01' = if (deployManaged
   resource dataExplorerSubnet 'subnets' existing = {
     name: dataExplorerSubnetName
   }
-}
-
-resource existingVNet 'Microsoft.Network/virtualNetworks@2023-11-01' existing = if (useCustomerNetwork) {
-  scope: resourceGroup(split(hub.routing.networkId, '/')[2], split(hub.routing.networkId, '/')[4])
-  name: hub.routing.networkName
 }
 
 //------------------------------------------------------------------------------
@@ -454,11 +448,11 @@ output vNetId string = !hub.options.privateRouting ? '' : (deployManagedNetwork 
 
 @description('Virtual network address prefixes.')
 #disable-next-line BCP318 // Null safety warning for conditional resource access
-output vNetAddressSpace array = !hub.options.privateRouting ? [] : (deployManagedNetwork ? vNet.properties.addressSpace.addressPrefixes : existingVNet.properties.addressSpace.addressPrefixes)
+output vNetAddressSpace array = deployManagedNetwork ? vNet.properties.addressSpace.addressPrefixes : []
 
 @description('Virtual network subnets.')
 #disable-next-line BCP318 // Null safety warning for conditional resource access
-output vNetSubnets array = !hub.options.privateRouting ? [] : (deployManagedNetwork ? vNet.properties.subnets : existingVNet.properties.subnets)
+output vNetSubnets array = deployManagedNetwork ? vNet.properties.subnets : []
 
 @description('Resource ID of the FinOps hub network subnet.')
 output finopsHubSubnetId string = !hub.options.privateRouting ? '' : hub.routing.subnets.storage
