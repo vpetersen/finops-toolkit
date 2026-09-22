@@ -277,7 +277,7 @@ func newHubInternal(
       dataExplorer: enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? (empty(existingPrivateDnsZoneIds.dataExplorer) ? { id:'', name:'' } : idNameFromId(existingPrivateDnsZoneIds.dataExplorer)) : dataExplorerDnsZoneIdName(location))
     }
     subnets: {
-      dataExplorer: enablePublicAccess ? '' : (privateNetworkMode == 'customer' ? (empty(existingDataExplorerSubnetId) ? '${existingVirtualNetworkId}/subnets/dataExplorer-subnet' : existingDataExplorerSubnetId) : resourceId('Microsoft.Network/virtualNetworks/subnets', networkName, 'dataExplorer-subnet')!)
+      dataExplorer: enablePublicAccess ? '' : (privateNetworkMode == 'customer' ? existingDataExplorerSubnetId : resourceId('Microsoft.Network/virtualNetworks/subnets', networkName, 'dataExplorer-subnet')!)
       dataFactory:  enablePublicAccess ? '' : (privateNetworkMode == 'customer' ? existingPrivateEndpointSubnetId : resourceId('Microsoft.Network/virtualNetworks/subnets', networkName, 'private-endpoint-subnet')!)
       keyVault:     enablePublicAccess ? '' : (privateNetworkMode == 'customer' ? existingPrivateEndpointSubnetId : resourceId('Microsoft.Network/virtualNetworks/subnets', networkName, 'private-endpoint-subnet')!)
       scripts:      enablePublicAccess ? '' : (privateNetworkMode == 'customer' ? existingScriptSubnetId : resourceId('Microsoft.Network/virtualNetworks/subnets', networkName, 'script-subnet')!)

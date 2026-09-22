@@ -220,8 +220,18 @@ var useFabric = !empty(fabricQueryUri)
 var useAzureDataExplorer = !useFabric && !empty(dataExplorerName)  // Prefer Fabric over Azure Data Explorer
 var useRemoteHub = !empty(remoteHubStorageKey)
 var isCustomerManagedPrivateNetwork = !enablePublicAccess && privateNetworkMode == 'customer'
-var customerNetworkConfigurationIsValid = !isCustomerManagedPrivateNetwork || (!empty(existingVirtualNetworkId) && !empty(existingPrivateEndpointSubnetId) && !empty(existingScriptSubnetId) && (!useAzureDataExplorer || !empty(existingDataExplorerSubnetId)) && !empty(existingPrivateDnsZoneIds.blob) && !empty(existingPrivateDnsZoneIds.dfs) && !empty(existingPrivateDnsZoneIds.file) && !empty(existingPrivateDnsZoneIds.queue) && !empty(existingPrivateDnsZoneIds.table) && (!useAzureDataExplorer || !empty(existingPrivateDnsZoneIds.dataExplorer)) && (!useRemoteHub || !empty(existingPrivateDnsZoneIds.keyVault)))
-var validateCustomerNetworkConfiguration = customerNetworkConfigurationIsValid ? true : fail('Customer private network mode requires existingVirtualNetworkId, existingPrivateEndpointSubnetId, existingScriptSubnetId, required private DNS zone IDs, existingDataExplorerSubnetId plus dataExplorer DNS zone ID when Azure Data Explorer is enabled, and keyVault DNS zone ID when remote hubs are enabled.')
+var validateCustomerVirtualNetwork = !isCustomerManagedPrivateNetwork || !empty(existingVirtualNetworkId) ? true : fail('Customer private network mode requires existingVirtualNetworkId.')
+var validateCustomerPrivateEndpointSubnet = !isCustomerManagedPrivateNetwork || !empty(existingPrivateEndpointSubnetId) ? true : fail('Customer private network mode requires existingPrivateEndpointSubnetId.')
+var validateCustomerScriptSubnet = !isCustomerManagedPrivateNetwork || !empty(existingScriptSubnetId) ? true : fail('Customer private network mode requires existingScriptSubnetId.')
+var validateCustomerBlobDnsZone = !isCustomerManagedPrivateNetwork || !empty(existingPrivateDnsZoneIds.blob) ? true : fail('Customer private network mode requires existingPrivateDnsZoneIds.blob.')
+var validateCustomerDfsDnsZone = !isCustomerManagedPrivateNetwork || !empty(existingPrivateDnsZoneIds.dfs) ? true : fail('Customer private network mode requires existingPrivateDnsZoneIds.dfs.')
+var validateCustomerFileDnsZone = !isCustomerManagedPrivateNetwork || !empty(existingPrivateDnsZoneIds.file) ? true : fail('Customer private network mode requires existingPrivateDnsZoneIds.file.')
+var validateCustomerQueueDnsZone = !isCustomerManagedPrivateNetwork || !empty(existingPrivateDnsZoneIds.queue) ? true : fail('Customer private network mode requires existingPrivateDnsZoneIds.queue.')
+var validateCustomerTableDnsZone = !isCustomerManagedPrivateNetwork || !empty(existingPrivateDnsZoneIds.table) ? true : fail('Customer private network mode requires existingPrivateDnsZoneIds.table.')
+var validateCustomerDataExplorerSubnet = !isCustomerManagedPrivateNetwork || !useAzureDataExplorer || !empty(existingDataExplorerSubnetId) ? true : fail('Customer private network mode with Azure Data Explorer requires existingDataExplorerSubnetId.')
+var validateCustomerDataExplorerDnsZone = !isCustomerManagedPrivateNetwork || !useAzureDataExplorer || !empty(existingPrivateDnsZoneIds.dataExplorer) ? true : fail('Customer private network mode with Azure Data Explorer requires existingPrivateDnsZoneIds.dataExplorer.')
+var validateCustomerKeyVaultDnsZone = !isCustomerManagedPrivateNetwork || !useRemoteHub || !empty(existingPrivateDnsZoneIds.keyVault) ? true : fail('Customer private network mode with remote hubs requires existingPrivateDnsZoneIds.keyVault.')
+var validateCustomerNetworkConfiguration = validateCustomerVirtualNetwork && validateCustomerPrivateEndpointSubnet && validateCustomerScriptSubnet && validateCustomerBlobDnsZone && validateCustomerDfsDnsZone && validateCustomerFileDnsZone && validateCustomerQueueDnsZone && validateCustomerTableDnsZone && validateCustomerDataExplorerSubnet && validateCustomerDataExplorerDnsZone && validateCustomerKeyVaultDnsZone
 
 // Hub details
 var hub = newHub(
