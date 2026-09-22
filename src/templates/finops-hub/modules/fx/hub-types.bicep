@@ -271,7 +271,7 @@ func newHubInternal(
       blob:         enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.blob) : dnsZoneIdName('blob'))
       dfs:          enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.dfs) : dnsZoneIdName('dfs'))
       file:         enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.file) : dnsZoneIdName('file'))
-      keyVault:     enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.keyVault) : keyVaultDnsZoneIdName())
+      keyVault:     enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? (empty(existingPrivateDnsZoneIds.keyVault) ? { id:'', name:'' } : idNameFromId(existingPrivateDnsZoneIds.keyVault)) : keyVaultDnsZoneIdName())
       queue:        enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.queue) : dnsZoneIdName('queue'))
       table:        enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.table) : dnsZoneIdName('table'))
       dataExplorer: enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? (empty(existingPrivateDnsZoneIds.dataExplorer) ? { id:'', name:'' } : idNameFromId(existingPrivateDnsZoneIds.dataExplorer)) : dataExplorerDnsZoneIdName(location))

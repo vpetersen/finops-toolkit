@@ -260,25 +260,16 @@ resource dataFactory 'Microsoft.DataFactory/factories@2018-06-01' existing = {
 resource blobPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = if (usePrivateRouting) {
   scope: resourceGroup(split(app.hub.routing.dnsZones.blob.id, '/')[2], split(app.hub.routing.dnsZones.blob.id, '/')[4])
   name: last(array(split(app.hub.routing.dnsZones.blob.id, '/')))
-  dependsOn: [
-    appRegistration
-  ]
 }
 
 resource queuePrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = if (usePrivateRouting) {
   scope: resourceGroup(split(app.hub.routing.dnsZones.queue.id, '/')[2], split(app.hub.routing.dnsZones.queue.id, '/')[4])
   name: last(array(split(app.hub.routing.dnsZones.queue.id, '/')))
-  dependsOn: [
-    appRegistration
-  ]
 }
 
 resource tablePrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = if (usePrivateRouting) {
   scope: resourceGroup(split(app.hub.routing.dnsZones.table.id, '/')[2], split(app.hub.routing.dnsZones.table.id, '/')[4])
   name: last(array(split(app.hub.routing.dnsZones.table.id, '/')))
-  dependsOn: [
-    appRegistration
-  ]
 }
 
 resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' existing = {
