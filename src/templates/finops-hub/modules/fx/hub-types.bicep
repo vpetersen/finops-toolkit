@@ -186,7 +186,9 @@ func idName(name string, resourceType string) IdNameObject => {
 
 func idNameFromId(id string) IdNameObject => {
   id: id
-  name: last(array(split(id, '/')))
+  name: empty(id)
+    ? ''
+    : (endsWith(id, '/') ? last(take(array(split(id, '/')), length(array(split(id, '/'))) - 1)) : last(array(split(id, '/'))))
 }
 
 // cSpell:ignore privatelink
