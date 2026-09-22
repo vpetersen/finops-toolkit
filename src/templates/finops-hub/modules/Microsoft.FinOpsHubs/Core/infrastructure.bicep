@@ -22,6 +22,7 @@ var natGatewayPipName = '${hub.routing.networkName}-natgw-pip'
 var deployManagedNetwork = hub.options.privateRouting && hub.routing.ownsNetwork
 var useCustomerNetwork = hub.options.privateRouting && !hub.routing.ownsNetwork
 var deployManagedDnsZones = hub.options.privateRouting && hub.routing.ownsDnsZones
+var useCustomerDnsZones = hub.options.privateRouting && !hub.routing.ownsDnsZones
 
 // Workaround https://github.com/Azure/bicep/issues/1853
 var finopsHubSubnetName = 'private-endpoint-subnet'
@@ -323,7 +324,7 @@ resource filePrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = if 
   }
 }
 
-resource existingFilePrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = if (useCustomerNetwork) {
+resource existingFilePrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = if (useCustomerDnsZones) {
   scope: resourceGroup(split(hub.routing.dnsZones.file.id, '/')[2], split(hub.routing.dnsZones.file.id, '/')[4])
   name: last(array(split(hub.routing.dnsZones.file.id, '/')))
 }

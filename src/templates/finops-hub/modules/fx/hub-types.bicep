@@ -274,7 +274,7 @@ func newHubInternal(
       keyVault:     enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.keyVault) : keyVaultDnsZoneIdName())
       queue:        enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.queue) : dnsZoneIdName('queue'))
       table:        enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.table) : dnsZoneIdName('table'))
-      dataExplorer: enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.dataExplorer) : dataExplorerDnsZoneIdName(location))
+      dataExplorer: enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? (empty(existingPrivateDnsZoneIds.dataExplorer) ? { id:'', name:'' } : idNameFromId(existingPrivateDnsZoneIds.dataExplorer)) : dataExplorerDnsZoneIdName(location))
     }
     subnets: {
       dataExplorer: enablePublicAccess ? '' : (privateNetworkMode == 'customer' ? existingDataExplorerSubnetId : resourceId('Microsoft.Network/virtualNetworks/subnets', networkName, 'dataExplorer-subnet')!)
