@@ -118,6 +118,35 @@ When you deploy with private routing and customer-managed networking, set `priva
 
 In customer-managed mode, ensure your DNS design resolves both Storage and Azure Data Explorer private endpoint records from all required clients and runtimes. This includes linking private DNS zones to the target virtual network and configuring DNS forwarding or private resolver paths for connected networks as needed.
 
+#### Deploy with Bicep
+
+Use Bicep deployment parameters to enable customer-managed private networking.
+
+```bash
+az deployment group create \
+  --resource-group <resource-group-name> \
+  --template-file main.bicep \
+  --parameters \
+      hubName=<hub-name> \
+      enablePublicAccess=false \
+      privateNetworkMode=customer \
+      existingVirtualNetworkId=<vnet-resource-id> \
+      existingPrivateEndpointSubnetId=<private-endpoint-subnet-resource-id> \
+      existingScriptSubnetId=<script-subnet-resource-id> \
+      existingDataExplorerSubnetId=<data-explorer-subnet-resource-id> \
+      existingPrivateDnsZoneIds='{
+        "blob": "<blob-private-dns-zone-resource-id>",
+        "dfs": "<dfs-private-dns-zone-resource-id>",
+        "file": "<file-private-dns-zone-resource-id>",
+        "keyVault": "<key-vault-private-dns-zone-resource-id>",
+        "queue": "<queue-private-dns-zone-resource-id>",
+        "table": "<table-private-dns-zone-resource-id>",
+        "dataExplorer": "<data-explorer-private-dns-zone-resource-id>"
+      }'
+```
+
+If you don't deploy Azure Data Explorer, omit `existingDataExplorerSubnetId` and set `existingPrivateDnsZoneIds.dataExplorer` to an empty string.
+
 <br>
 
 ## Removing private networking
