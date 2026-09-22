@@ -86,7 +86,7 @@ module invalidCustomerNetworkMissingAdxInputs '../main.bicep' = if (runNegativeT
       blob: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/privateDnsZones/privatelink.blob.${environment().suffixes.storage}'
       dfs: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/privateDnsZones/privatelink.dfs.${environment().suffixes.storage}'
       file: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/privateDnsZones/privatelink.file.${environment().suffixes.storage}'
-      keyVault: ''
+      keyVault: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/privateDnsZones/privatelink${replace(environment().suffixes.keyvaultDns, 'vault', 'vaultcore')}'
       queue: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/privateDnsZones/privatelink.queue.${environment().suffixes.storage}'
       table: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/privateDnsZones/privatelink.table.${environment().suffixes.storage}'
       dataExplorer: ''

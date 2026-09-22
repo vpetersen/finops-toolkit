@@ -508,25 +508,25 @@ resource dataExplorerPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/pri
   properties: {
     privateDnsZoneConfigs: [
       {
-      name: 'privatelink-westus-kusto-net'
+      name: take(replace(deployManagedDnsZones ? dataExplorerPrivateDnsZone.name : existingDataExplorerPrivateDnsZone.name, '.', '-'), 80)
         properties: {
           privateDnsZoneId: deployManagedDnsZones ? dataExplorerPrivateDnsZone.id : existingDataExplorerPrivateDnsZone.id
         }
       }
       {
-      name: 'privatelink-blob-core-windows-net'
+      name: take(replace(blobPrivateDnsZone.name, '.', '-'), 80)
         properties: {
           privateDnsZoneId: blobPrivateDnsZone.id
         }
       }
       {
-      name: 'privatelink-table-core-windows-net'
+      name: take(replace(tablePrivateDnsZone.name, '.', '-'), 80)
         properties: {
           privateDnsZoneId: tablePrivateDnsZone.id
         }
       }
       {
-      name: 'privatelink-queue-core-windows-net'
+      name: take(replace(queuePrivateDnsZone.name, '.', '-'), 80)
         properties: {
           privateDnsZoneId: queuePrivateDnsZone.id
         }
