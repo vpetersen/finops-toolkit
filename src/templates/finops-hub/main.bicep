@@ -189,6 +189,7 @@ param existingPrivateDnsZoneIds object = {
   blob: ''
   dfs: ''
   file: ''
+  keyVault: ''
   queue: ''
   table: ''
   dataExplorer: ''

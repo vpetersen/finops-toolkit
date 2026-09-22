@@ -209,6 +209,11 @@ resource vNet 'Microsoft.Network/virtualNetworks@2023-11-01' = if (deployManaged
   }
 }
 
+resource existingVNet 'Microsoft.Network/virtualNetworks@2023-11-01' existing = if (useCustomerNetwork) {
+  scope: resourceGroup(split(hub.routing.networkId, '/')[2], split(hub.routing.networkId, '/')[4])
+  name: hub.routing.networkName
+}
+
 //------------------------------------------------------------------------------
 // NAT Gateway (provides explicit outbound for script-subnet + dataExplorer-subnet;
 // required by the 'Subnets should be private' policy and the September 2025
@@ -447,11 +452,11 @@ output vNetId string = !hub.options.privateRouting ? '' : (deployManagedNetwork 
 
 @description('Virtual network address prefixes.')
 #disable-next-line BCP318 // Null safety warning for conditional resource access
-output vNetAddressSpace array = deployManagedNetwork ? vNet.properties.addressSpace.addressPrefixes : []
+output vNetAddressSpace array = !hub.options.privateRouting ? [] : (deployManagedNetwork ? vNet.properties.addressSpace.addressPrefixes : existingVNet.properties.addressSpace.addressPrefixes)
 
 @description('Virtual network subnets.')
 #disable-next-line BCP318 // Null safety warning for conditional resource access
-output vNetSubnets array = deployManagedNetwork ? vNet.properties.subnets : []
+output vNetSubnets array = !hub.options.privateRouting ? [] : (deployManagedNetwork ? vNet.properties.subnets : existingVNet.properties.subnets)
 
 @description('Resource ID of the FinOps hub network subnet.')
 output finopsHubSubnetId string = !hub.options.privateRouting ? '' : hub.routing.subnets.storage

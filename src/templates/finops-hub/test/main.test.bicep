@@ -32,6 +32,7 @@ module customerNetworkHub '../main.bicep' = {
       blob: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/privateDnsZones/privatelink.blob.${environment().suffixes.storage}'
       dfs: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/privateDnsZones/privatelink.dfs.${environment().suffixes.storage}'
       file: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/privateDnsZones/privatelink.file.${environment().suffixes.storage}'
+      keyVault: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/privateDnsZones/privatelink${replace(environment().suffixes.keyvaultDns, 'vault', 'vaultcore')}'
       queue: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/privateDnsZones/privatelink.queue.${environment().suffixes.storage}'
       table: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/privateDnsZones/privatelink.table.${environment().suffixes.storage}'
       dataExplorer: ''
@@ -40,3 +41,30 @@ module customerNetworkHub '../main.bicep' = {
 }
 
 output customerNetworkHubName string = customerNetworkHub.outputs.name
+
+// Test 3 - Creates a customer-managed private network deployment with Azure Data Explorer enabled.
+module customerNetworkHubWithDataExplorer '../main.bicep' = {
+  name: 'finops-hub-customer-network-adx'
+  params: {
+    hubName: '${uniqueName}-customer-adx'
+    location: location
+    enablePublicAccess: false
+    privateNetworkMode: 'customer'
+    dataExplorerName: '${uniqueName}adx'
+    existingVirtualNetworkId: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/virtualNetworks/customer-vnet'
+    existingPrivateEndpointSubnetId: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/virtualNetworks/customer-vnet/subnets/private-endpoints'
+    existingScriptSubnetId: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/virtualNetworks/customer-vnet/subnets/scripts'
+    existingDataExplorerSubnetId: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/virtualNetworks/customer-vnet/subnets/data-explorer'
+    existingPrivateDnsZoneIds: {
+      blob: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/privateDnsZones/privatelink.blob.${environment().suffixes.storage}'
+      dfs: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/privateDnsZones/privatelink.dfs.${environment().suffixes.storage}'
+      file: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/privateDnsZones/privatelink.file.${environment().suffixes.storage}'
+      keyVault: ''
+      queue: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/privateDnsZones/privatelink.queue.${environment().suffixes.storage}'
+      table: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/privateDnsZones/privatelink.table.${environment().suffixes.storage}'
+      dataExplorer: '/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/customer-network-rg/providers/Microsoft.Network/privateDnsZones/privatelink.${location}.kusto.windows.net'
+    }
+  }
+}
+
+output customerNetworkHubWithDataExplorerName string = customerNetworkHubWithDataExplorer.outputs.name

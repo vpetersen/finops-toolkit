@@ -31,6 +31,7 @@ type IdNameObject = { id: string, name: string }
     blob: 'Resource ID and name for the blob storage DNS zone.'
     dfs: 'Resource ID and name for the DFS storage DNS zone.'
     file: 'Resource ID and name for the file storage DNS zone.'
+    keyVault: 'Resource ID and name for the Key Vault DNS zone.'
     queue: 'Resource ID and name for the queue storage DNS zone.'
     table: 'Resource ID and name for the table storage DNS zone.'
     dataExplorer: 'Resource ID and name for the Data Explorer DNS zone.'
@@ -53,6 +54,7 @@ type HubRoutingProperties = {
     blob: IdNameObject
     dfs: IdNameObject
     file: IdNameObject
+    keyVault: IdNameObject
     queue: IdNameObject
     table: IdNameObject
     dataExplorer: IdNameObject
@@ -199,6 +201,9 @@ func dataExplorerDnsSuffix() string => ({
 // cSpell:ignore privatelink
 func dataExplorerDnsZoneIdName(location string) IdNameObject => idName(replace('privatelink.${location}.${dataExplorerDnsSuffix()}', '..', '.'), 'Microsoft.Network/privateDnsZones')
 
+// cSpell:ignore privatelink, vaultcore
+func keyVaultDnsZoneIdName() IdNameObject => idName('privatelink${replace(environment().suffixes.keyvaultDns, 'vault', 'vaultcore')}', 'Microsoft.Network/privateDnsZones')
+
 //------------------------------------------------------------------------------
 // Hub config
 //------------------------------------------------------------------------------
@@ -226,6 +231,7 @@ func newHubInternal(
     blob: string
     dfs: string
     file: string
+    keyVault: string
     queue: string
     table: string
     dataExplorer: string
@@ -265,6 +271,7 @@ func newHubInternal(
       blob:         enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.blob) : dnsZoneIdName('blob'))
       dfs:          enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.dfs) : dnsZoneIdName('dfs'))
       file:         enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.file) : dnsZoneIdName('file'))
+      keyVault:     enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.keyVault) : keyVaultDnsZoneIdName())
       queue:        enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.queue) : dnsZoneIdName('queue'))
       table:        enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.table) : dnsZoneIdName('table'))
       dataExplorer: enablePublicAccess ? { id:'', name:'' } : (privateNetworkMode == 'customer' ? idNameFromId(existingPrivateDnsZoneIds.dataExplorer) : dataExplorerDnsZoneIdName(location))
@@ -304,6 +311,7 @@ func newHub(
     blob: string
     dfs: string
     file: string
+    keyVault: string
     queue: string
     table: string
     dataExplorer: string

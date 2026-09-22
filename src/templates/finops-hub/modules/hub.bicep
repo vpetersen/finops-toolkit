@@ -200,6 +200,7 @@ param existingPrivateDnsZoneIds object = {
   blob: ''
   dfs: ''
   file: ''
+  keyVault: ''
   queue: ''
   table: ''
   dataExplorer: ''
@@ -217,9 +218,10 @@ param enableDefaultTelemetry bool = true
 
 var useFabric = !empty(fabricQueryUri)
 var useAzureDataExplorer = !useFabric && !empty(dataExplorerName)  // Prefer Fabric over Azure Data Explorer
+var useRemoteHub = !empty(remoteHubStorageKey)
 var isCustomerManagedPrivateNetwork = !enablePublicAccess && privateNetworkMode == 'customer'
-var customerNetworkConfigurationIsValid = !isCustomerManagedPrivateNetwork || (!empty(existingVirtualNetworkId) && !empty(existingPrivateEndpointSubnetId) && !empty(existingScriptSubnetId) && (!useAzureDataExplorer || !empty(existingDataExplorerSubnetId)) && !empty(existingPrivateDnsZoneIds.blob) && !empty(existingPrivateDnsZoneIds.dfs) && !empty(existingPrivateDnsZoneIds.file) && !empty(existingPrivateDnsZoneIds.queue) && !empty(existingPrivateDnsZoneIds.table) && (!useAzureDataExplorer || !empty(existingPrivateDnsZoneIds.dataExplorer)))
-var validateCustomerNetworkConfiguration = customerNetworkConfigurationIsValid ? true : fail('Customer private network mode requires existingVirtualNetworkId, existingPrivateEndpointSubnetId, existingScriptSubnetId, required private DNS zone IDs, and existingDataExplorerSubnetId plus dataExplorer DNS zone ID when Azure Data Explorer is enabled.')
+var customerNetworkConfigurationIsValid = !isCustomerManagedPrivateNetwork || (!empty(existingVirtualNetworkId) && !empty(existingPrivateEndpointSubnetId) && !empty(existingScriptSubnetId) && (!useAzureDataExplorer || !empty(existingDataExplorerSubnetId)) && !empty(existingPrivateDnsZoneIds.blob) && !empty(existingPrivateDnsZoneIds.dfs) && !empty(existingPrivateDnsZoneIds.file) && !empty(existingPrivateDnsZoneIds.queue) && !empty(existingPrivateDnsZoneIds.table) && (!useAzureDataExplorer || !empty(existingPrivateDnsZoneIds.dataExplorer)) && (!useRemoteHub || !empty(existingPrivateDnsZoneIds.keyVault)))
+var validateCustomerNetworkConfiguration = customerNetworkConfigurationIsValid ? true : fail('Customer private network mode requires existingVirtualNetworkId, existingPrivateEndpointSubnetId, existingScriptSubnetId, required private DNS zone IDs, existingDataExplorerSubnetId plus dataExplorer DNS zone ID when Azure Data Explorer is enabled, and keyVault DNS zone ID when remote hubs are enabled.')
 
 // Hub details
 var hub = newHub(
