@@ -176,6 +176,36 @@ param enableNatGateway bool = false
 @description('Optional. Address space for the workload. Minimum /26 subnet size is required for the workload. Default: "10.20.30.0/26".')
 param virtualNetworkAddressPrefix string = '10.20.30.0/26'
 
+@allowed([
+  'managed'
+  'customer'
+])
+@description('Optional. Private network ownership mode when private routing is enabled. "managed" (default) creates FinOps toolkit-managed virtual network and private DNS resources. "customer" uses existing customer-managed virtual network, subnets, and private DNS zones.')
+param privateNetworkMode string = 'managed'
+
+@description('Optional. Existing virtual network resource ID to use in customer private network mode.')
+param existingVirtualNetworkId string = ''
+
+@description('Optional. Existing subnet resource ID for Storage and Key Vault private endpoints in customer private network mode.')
+param existingPrivateEndpointSubnetId string = ''
+
+@description('Optional. Existing subnet resource ID for deployment scripts in customer private network mode.')
+param existingScriptSubnetId string = ''
+
+@description('Optional. Existing subnet resource ID for Azure Data Explorer private endpoints in customer private network mode.')
+param existingDataExplorerSubnetId string = ''
+
+@description('Optional. Existing private DNS zone resource IDs to use in customer private network mode.')
+param existingPrivateDnsZoneIds object = {
+  blob: ''
+  dfs: ''
+  file: ''
+  keyVault: ''
+  queue: ''
+  table: ''
+  dataExplorer: ''
+}
+
 @description('Optional. Enable telemetry to track anonymous module usage trends, monitor for bugs, and improve future releases.')
 param enableDefaultTelemetry bool = true
 
@@ -185,6 +215,22 @@ param enableDefaultTelemetry bool = true
 //==============================================================================
 
 // TODO: Move hub config to be retrieved from the cloud
+
+var useFabric = !empty(fabricQueryUri)
+var useAzureDataExplorer = !useFabric && !empty(dataExplorerName)  // Prefer Fabric over Azure Data Explorer
+var isCustomerManagedPrivateNetwork = !enablePublicAccess && privateNetworkMode == 'customer'
+var validateCustomerVirtualNetwork = !isCustomerManagedPrivateNetwork || !empty(existingVirtualNetworkId) ? true : fail('Customer private network mode requires existingVirtualNetworkId.')
+var validateCustomerPrivateEndpointSubnet = !isCustomerManagedPrivateNetwork || !empty(existingPrivateEndpointSubnetId) ? true : fail('Customer private network mode requires existingPrivateEndpointSubnetId.')
+var validateCustomerScriptSubnet = !isCustomerManagedPrivateNetwork || !empty(existingScriptSubnetId) ? true : fail('Customer private network mode requires existingScriptSubnetId.')
+var validateCustomerBlobDnsZone = !isCustomerManagedPrivateNetwork || !empty(existingPrivateDnsZoneIds.blob) ? true : fail('Customer private network mode requires existingPrivateDnsZoneIds.blob.')
+var validateCustomerDfsDnsZone = !isCustomerManagedPrivateNetwork || !empty(existingPrivateDnsZoneIds.dfs) ? true : fail('Customer private network mode requires existingPrivateDnsZoneIds.dfs.')
+var validateCustomerFileDnsZone = !isCustomerManagedPrivateNetwork || !empty(existingPrivateDnsZoneIds.file) ? true : fail('Customer private network mode requires existingPrivateDnsZoneIds.file.')
+var validateCustomerQueueDnsZone = !isCustomerManagedPrivateNetwork || !empty(existingPrivateDnsZoneIds.queue) ? true : fail('Customer private network mode requires existingPrivateDnsZoneIds.queue.')
+var validateCustomerTableDnsZone = !isCustomerManagedPrivateNetwork || !empty(existingPrivateDnsZoneIds.table) ? true : fail('Customer private network mode requires existingPrivateDnsZoneIds.table.')
+var validateCustomerDataExplorerSubnet = !isCustomerManagedPrivateNetwork || !useAzureDataExplorer || !empty(existingDataExplorerSubnetId) ? true : fail('Customer private network mode with Azure Data Explorer requires existingDataExplorerSubnetId.')
+var validateCustomerDataExplorerDnsZone = !isCustomerManagedPrivateNetwork || !useAzureDataExplorer || !empty(existingPrivateDnsZoneIds.dataExplorer) ? true : fail('Customer private network mode with Azure Data Explorer requires existingPrivateDnsZoneIds.dataExplorer.')
+var validateCustomerKeyVaultDnsZone = !isCustomerManagedPrivateNetwork || !empty(existingPrivateDnsZoneIds.keyVault) ? true : fail('Customer private network mode requires existingPrivateDnsZoneIds.keyVault.')
+var validateCustomerNetworkConfiguration = validateCustomerVirtualNetwork && validateCustomerPrivateEndpointSubnet && validateCustomerScriptSubnet && validateCustomerBlobDnsZone && validateCustomerDfsDnsZone && validateCustomerFileDnsZone && validateCustomerQueueDnsZone && validateCustomerTableDnsZone && validateCustomerDataExplorerSubnet && validateCustomerDataExplorerDnsZone && validateCustomerKeyVaultDnsZone
 
 // Hub details
 var hub = newHub(
@@ -198,12 +244,15 @@ var hub = newHub(
   enableInfrastructureEncryption,
   enablePublicAccess,
   enableNatGateway,
+  privateNetworkMode,
+  existingVirtualNetworkId,
+  existingPrivateEndpointSubnetId,
+  existingScriptSubnetId,
+  existingDataExplorerSubnetId,
+  existingPrivateDnsZoneIds,
   virtualNetworkAddressPrefix,
-  enableDefaultTelemetry
+  enableDefaultTelemetry && validateCustomerNetworkConfiguration
 )
-
-var useFabric = !empty(fabricQueryUri)
-var useAzureDataExplorer = !useFabric && !empty(dataExplorerName)  // Prefer Fabric over Azure Data Explorer
 
 // The last segment of the GUID in the telemetryId (40b) is used to identify this module
 // Remaining characters identify settings; must be <= 12 chars -- Example: (guid)_RLXD##x1000P
